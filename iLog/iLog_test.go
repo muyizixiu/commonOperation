@@ -14,7 +14,7 @@ func Test_Log(t *testing.T) {
 		test_log[i] = New(v)
 	}
 	for _, v := range test_log {
-		for i := 0; i < 10; {
+		for i := 0; i < 100000; {
 			v.Log("hello world")
 			i++
 		}

@@ -9,9 +9,10 @@ import (
 )
 
 type log struct {
-	addr   string
-	locker sync.Mutex
-	file   *os.File
+	addr         string
+	locker       sync.Mutex
+	file         *os.File
+	fileOpenFlag bool
 }
 
 var a int
@@ -48,10 +49,18 @@ func (l *log) open() bool {
 		}
 	}
 	l.file = f
+	l.fileOpenFlag = true
 	return true
 }
 func (l log) close() {
-	l.file.Close()
+	if !l.fileOpenFlag {
+		return
+	}
+	go func() {
+		time.Sleep(10 * time.Second)
+		l.file.Close()
+		l.fileOpenFlag = false
+	}()
 }
 func isExist(addr string) bool {
 	_, err := os.Stat(addr)
@@ -65,8 +74,10 @@ func (l log) LogError(err error) bool {
 	return l.Log(err.Error())
 }
 func (l log) write(b []byte) bool {
-	if !l.open() {
-		return false
+	if !l.fileOpenFlag {
+		if !l.open() {
+			return false
+		}
 	}
 	defer l.close()
 	l.locker.Lock()
