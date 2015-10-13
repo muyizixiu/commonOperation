@@ -13,6 +13,8 @@ type log struct {
 	locker       sync.Mutex
 	file         *os.File
 	fileOpenFlag bool
+	isClosing    bool
+	closed       bool
 }
 
 var a int
@@ -56,11 +58,25 @@ func (l log) close() {
 	if !l.fileOpenFlag {
 		return
 	}
-	go func() {
-		time.Sleep(10 * time.Second)
-		l.file.Close()
-		l.fileOpenFlag = false
-	}()
+	if !l.closed {
+		go func() {
+			l.closed = true
+			l.isClosing = true
+			for {
+				time.Sleep(10 * time.Second)
+				if isClosing {
+					l.isClosing = false
+				} else {
+					break
+				}
+			}
+			l.file.Close()
+			l.fileOpenFlag = false
+			l.closed = false
+		}()
+	} else {
+		l.isClosing = true
+	}
 }
 func isExist(addr string) bool {
 	_, err := os.Stat(addr)
