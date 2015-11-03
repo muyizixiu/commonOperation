@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var a int
+
 type log struct {
 	addr         string
 	locker       sync.Mutex
@@ -17,10 +19,10 @@ type log struct {
 	closed       bool
 }
 
-var a int
+const logDir = "/root/log/"
 
 func New(addre string) *log {
-	l := &log{addr: addre, locker: sync.Mutex{}}
+	l := &log{addr: logDir + addre, locker: sync.Mutex{}}
 	if l.open() {
 		l.close()
 		return l
@@ -28,6 +30,8 @@ func New(addre string) *log {
 	fmt.Println("fail to create a log object")
 	return &log{}
 }
+
+//打开log文件
 func (l *log) open() bool {
 	var (
 		f    *os.File
@@ -54,17 +58,19 @@ func (l *log) open() bool {
 	l.fileOpenFlag = true
 	return true
 }
-func (l log) close() {
+
+//关闭log文件
+func (l *log) close() {
 	if !l.fileOpenFlag {
 		return
 	}
 	if !l.closed {
+		l.closed = true
+		l.isClosing = true
 		go func() {
-			l.closed = true
-			l.isClosing = true
 			for {
 				time.Sleep(10 * time.Second)
-				if isClosing {
+				if l.isClosing {
 					l.isClosing = false
 				} else {
 					break
@@ -78,20 +84,27 @@ func (l log) close() {
 		l.isClosing = true
 	}
 }
+
+//文件是否存在
 func isExist(addr string) bool {
 	_, err := os.Stat(addr)
 	return err == nil || os.IsExist(err)
 }
+
+//记录字符串
 func (l log) Log(str string) bool {
 	str = now() + str
 	return l.write([]byte(str))
 }
+
+//错误记录
 func (l log) LogError(err error) bool {
 	return l.Log(err.Error())
 }
 func (l log) write(b []byte) bool {
 	if !l.fileOpenFlag {
 		if !l.open() {
+			fmt.Println("fail")
 			return false
 		}
 	}
@@ -108,7 +121,7 @@ func (l log) write(b []byte) bool {
 	return true
 }
 func now() string {
-	return "\r\n##############" + time.Now().String() + "###############\r\n"
+	return "\r\n" + time.Now().String() + "   # "
 }
 func (l log) Read() string {
 	l.open()

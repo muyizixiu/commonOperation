@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	test_addr []string = []string{"1.txt", "/usr/local/go/src/iLog/2.txt", "shirasd/dfad"}
+	test_addr []string = []string{"1.txt", "2.txt", "shirasd/dfad"}
 )
 
 func Test_Log(t *testing.T) {
